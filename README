@@ -1,0 +1,50 @@
+`colex' is a small package for studying colour properties of digital images,
+that I coded during my 2006 new year break.  I would have liked to clean up and
+document the code and correct some mistakes, but that may not happen any time
+soon (if ever) as I probably won't find the time.  As such, I am releasing it
+in its present unpolished form.  Feel free to contact me at the address below
+with your comments, etc., but please do not feel offended should I not be able
+to implement your suggestions or to answer your questions in great detail.
+
+
+compiling and running
+---------------------
+
+You will need plan9port[1], a recent version of libtiff[2], and possibly other
+dependencies.  After installing these go into `colex/src/' and type:
+
+    mk
+
+The binaries will be placed in `colex/bin/'.  There is a script there named
+`colex.rc' that takes a tiff file as a command line argument and requires a
+named pipe in `colex/bin/' named `cmd' for communication between the component.
+
+The GUI roughly follows the Plan9 GUI philosophy.  Clicking each mouse button
+in programme windows brings up a menu.
+
+This was my first experience in (pseudo-)plan9 programming, as well as in
+multi-threaded programming and GUIs.  Don't expect much.
+
+
+license
+-------
+
+Copyright (c) 2006 Pouya D. Tafti
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+--
+Pouya Tafti
+
+$ 2006-10-13 $

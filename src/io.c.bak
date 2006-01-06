@@ -1,0 +1,157 @@
+/*
+ * io.c.bak -- part of the colex package
+ *
+ * Copyright (c) 2006 Pouya D. Tafti
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * 
+ * author: Pouya D. Tafti
+ *
+ * $ 2006-01-02 $
+ *
+ */
+
+#include <u.h>
+#include <libc.h>
+#include <bio.h> /* FIXME for debugging */
+#include <draw.h>
+#include <thread.h>
+#include <mouse.h>
+
+#include "ioproc.h"
+#include "io.h"
+
+#define DEBUG   1
+
+uchar got;
+uchar block;
+
+Biobuf bin; /* FIXME for debugging */
+
+void
+initio()
+{
+    if(DEBUG) fprint(2,"initio: mouse\n");
+
+    mctl = initmouse(nil,display->image);
+    if(mctl == nil){
+        fprint(2, "initio: mouse: %r\n");
+        threadexitsall("mouse");
+    }
+    
+    if(DEBUG) fprint(2,"initio: ioproc\n");
+
+    io = ioproc();
+
+    Binit(&bin,0,OREAD); /* FIXME for debugging */
+
+    got=block=0;
+}
+
+void
+readio()
+{
+    int dmy;
+
+    /* resize */
+    if(nbrecv(mctl->resizec,&dmy) == 1) got |= (1<<Gresize);
+
+    /* stdin */
+    /* this is a bloody mess since iointerrupt is not implemented */
+    /*
+    if(!isset(block,Bstdin)) {
+        block |= (1<<Bstdin);
+        if(ioread(io,0,&nextch,1)>0) got |= (1<<Gstdin); 
+    }
+    else {
+        if(!io->inuse) { block &= !(1<<Bstdin); got |= (1<<Gstdin); }
+    }
+    */
+    if(!isset(block,Bstdin) && !isset(got,Gstdin)) {
+        block |= (1<<Bstdin);
+        dmy=proccreate(stdinthread,nil,8192);
+        if(DEBUG) fprint(2,"stdinthread (%d) created\n",dmy);
+    }
+    
+    /* iointerrupt(); */
+
+    /* mouse */
+    /*
+    if((dmy=nbrecv(mctl->c,&mctl->m)) == 1) { 
+        got |= (1<<Gmouse);
+        if(DEBUG) fprint(2,"readio: mouse: % 3d,% 3d btns: %1d\n",(mctl->m).xy.x,(mctl->m).xy.y,(mctl->m).buttons);
+    }
+    */
+    if(!isset(block,Bmouse)) {
+        block |= (1<<Bmouse);
+        dmy=proccreate(mousethread,nil,8192);
+        if(DEBUG) fprint(2,"mousethread (%d) created\n",dmy);
+    }
+}
+
+void
+stdinthread(void *v)
+{
+    int dmy;
+    /*while(!(ioread(io,0,&nextch,1)>0));*/
+    if(DEBUG) fprint(2,"stdinthread started\n");
+    /* while(!((dmy=ioread(io,0,&nextch,1)) > 0)) { if(DEBUG) fprint(2,"% * 2d",dmy); } */
+    nextch=Bgetc(&bin);
+    if(DEBUG) fprint(2,"stdinthread: %c\n",nextch);
+
+    got |= (1<<Gstdin);
+    block &= !(1<<Bstdin);
+
+    if(DEBUG) fprint(2,"stdthread ended\n");
+    threadexits(0);
+}
+
+void
+mousethread(void *v)
+{
+    int dmy;
+
+    if(DEBUG) fprint(2,"mousethread started\n");
+
+    if((dmy=recv(mctl->c,&mctl->m)) == 1) { 
+        got |= (1<<Gmouse);
+        if(DEBUG) fprint(2,"readio: mouse: % 3d,% 3d btns: %1d\n",(mctl->m).xy.x,(mctl->m).xy.y,(mctl->m).buttons);
+    }
+    block &= !(1<<Bmouse);
+
+    if(DEBUG) fprint(2,"mousethread ended\n");
+    threadexits(0);
+}
+
+Mouse
+rdmouse()
+{
+    got &= !(1<<Gmouse);
+    return mctl->m;
+}
+
+char
+rdchar()
+{
+    if(!isset(got,Gstdin)) return 0;
+    
+    got &= !(1<<Gstdin);
+    return nextch;
+}
+
+void
+closeio()
+{
+    closemouse(mctl);
+    closeioproc(io);
+}

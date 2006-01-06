@@ -1,0 +1,37 @@
+# objtype=usr/local/plan9/unix
+# </$objtype/mkfile
+
+CC=9c
+LD=9l
+CFLAGS=-I/usr/include
+LDFLAGS=
+
+BIN=../bin
+O=o
+
+
+all:V:      iv thcv
+
+iv:V:       $BIN/iv
+
+#cv:V:       $BIN/cv
+
+thcv:V:     $BIN/thcv
+
+$BIN/iv:    iv.$O
+            $LD -o $target $prereq -L/usr/lib -ltiff $LDFLAGS
+            
+#$BIN/cv:    cv.$O colour.$O
+#            $LD -o $target $prereq $LDFLAGS
+
+$BIN/thcv:  thcv.$O io.$O colour.$O
+            $LD -o $target $prereq $LDFLAGS
+
+io.$O:      io.h
+colour.$O:  colour.h
+
+%.$O:       %.c
+            $CC $CFLAGS $stem.c
+
+clean:V:
+            rm -f *.$O
